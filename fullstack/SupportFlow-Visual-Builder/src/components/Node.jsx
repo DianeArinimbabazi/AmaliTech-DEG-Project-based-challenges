@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { useRef } from "react";
 
 const typeColors = {
   start: "#4f6ef7",
@@ -12,12 +12,48 @@ const typeLabels = {
   end: "End",
 };
 
-export default function Node({ node, isSelected, onClick }) {
+export default function Node({ node, isSelected, onClick, onDrag }) {
+  const dragging = useRef(false);
+  const startPos = useRef({ x: 0, y: 0 });
+  const startNode = useRef({ x: 0, y: 0 });
+
   const color = typeColors[node.type] || "#9ba0be";
+
+  function handleMouseDown(e) {
+    e.stopPropagation();
+    dragging.current = true;
+    startPos.current = { x: e.clientX, y: e.clientY };
+    startNode.current = { x: node.position.x, y: node.position.y };
+
+    function handleMouseMove(e) {
+      if (!dragging.current) return;
+      const dx = e.clientX - startPos.current.x;
+      const dy = e.clientY - startPos.current.y;
+      onDrag(node.id, {
+        x: Math.max(0, startNode.current.x + dx),
+        y: Math.max(0, startNode.current.y + dy),
+      });
+    }
+
+    function handleMouseUp() {
+      dragging.current = false;
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    }
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  }
+
+  function handleClick(e) {
+    e.stopPropagation();
+    onClick(node);
+  }
 
   return (
     <div
-      onClick={() => onClick(node)}
+      onMouseDown={handleMouseDown}
+      onClick={handleClick}
       style={{
         position: "absolute",
         left: node.position.x,
@@ -27,10 +63,11 @@ export default function Node({ node, isSelected, onClick }) {
         border: `1.5px solid ${isSelected ? "#4f6ef7" : "#2a2d3a"}`,
         borderRadius: 10,
         padding: "12px 14px",
-        cursor: "pointer",
+        cursor: "grab",
         boxShadow: isSelected ? "0 0 0 3px #1a1f35" : "none",
         transition: "border-color 0.15s",
         zIndex: isSelected ? 2 : 1,
+        userSelect: "none",
       }}
     >
       <div

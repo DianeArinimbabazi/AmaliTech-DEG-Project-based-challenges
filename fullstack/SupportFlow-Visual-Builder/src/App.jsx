@@ -20,6 +20,12 @@ export default function App() {
     setSelectedNode(updatedNode);
   }
 
+  function handleDrag(id, newPosition) {
+    setNodes(nodes.map((n) =>
+      n.id === id ? { ...n, position: newPosition } : n
+    ));
+  }
+
   function handleAddNode() {
     const newNode = {
       id: String(Date.now()),
@@ -30,6 +36,10 @@ export default function App() {
     };
     setNodes([...nodes, newNode]);
     setSelectedNode(newNode);
+  }
+
+  function handleCanvasClick() {
+    setSelectedNode(null);
   }
 
   return (
@@ -45,7 +55,7 @@ export default function App() {
       </div>
 
       <div className="main">
-        <div className="canvas-wrapper">
+        <div className="canvas-wrapper" onClick={handleCanvasClick}>
           <div className="canvas">
             <Connectors nodes={nodes} />
             {nodes.map((node) => (
@@ -54,6 +64,7 @@ export default function App() {
                 node={node}
                 isSelected={selectedNode?.id === node.id}
                 onClick={handleNodeClick}
+                onDrag={handleDrag}
               />
             ))}
           </div>
